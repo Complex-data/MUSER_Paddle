@@ -1,4 +1,3 @@
-````
 # MUSER_Paddle
 
 ## How to set up
