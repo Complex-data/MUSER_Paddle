@@ -1,4 +1,5 @@
 # MUSER_Paddle
+In this repository, we utilize <a href="https://github.com/PaddlePaddle/Paddle">paddel paddle</a> to implement the MUSER.
 
 ## How to set up
 * Python3.7 
@@ -7,6 +8,13 @@
 pip3 install -r requirements.txt
 ```
 
+## Prepare wiki corpus
+1) Download the <a href="https://dumps.wikimedia.org/enwiki/latest/">English Wikipedia </a> or <a href="https://dumps.wikimedia.org/zhwiki/latest/">Chinese Wikipedia</a>.
+2) Extract the Wikipedia through <a href="https://github.com/attardi/wikiextractor">wikiextractor</a>.
+3) Import Wiki into <a href="https://github.com/elastic/elasticsearch">ElasticSearch</a> to get a text database.
+4) Query in ES to generate the corresponding corpus, then process the corpus to get a jsonl file with documents as elements.
+
+   
 ## Index a list of documents:
 ```
 python multi_step_retriever_paddle.py --index example_docs.jsonl
