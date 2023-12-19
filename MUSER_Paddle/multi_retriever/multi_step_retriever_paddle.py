@@ -8,18 +8,13 @@ import pickle
 import re
 import numpy
 import nltk
+# import torch
 import paddle
-
-
 from scipy import spatial
-
-from paddlenlp.transformers import ErnieModel, ErnieTokenizer
-
-# from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
 
 from retriever.dense_retriever import DenseRetriever
 from retriever.sparse_retriever_fast import SparseRetrieverFast
-
 
 nltk.download('punkt')
 logging.getLogger().setLevel(logging.INFO)
@@ -27,24 +22,26 @@ logging.getLogger().setLevel(logging.INFO)
 
 class NewsRetriever:
     def __init__(self, docs_file=None, index_path='index', models_path='models/weights',
-                 encoder_batch_size=32, nli_batch_size=2):
+                 encoder_batch_size=32, nli_batch_size=32):
         self.index_path = index_path
         self.encoder_batch_size = encoder_batch_size
 
-        device = paddle.set_device('cpu')
-        if paddle.is_compiled_with_cuda():
-            device = paddle.set_device('gpu')
+        # device = paddle.set_device('cpu')
+        # if paddle.is_compiled_with_cuda():
+        #     device = paddle.set_device('gpu')
+        # device = 'cpu'
+        # if torch.cuda.is_available():
+        #     device = 'cuda'
 
         # initialize the sentence tokenizer
         self.sent_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
         self.sent_tokenizer._params.abbrev_types.update(['e.g', 'i.e', 'subsp'])
 
         # initialize the passage embedding model
-        model_name = 'ernie-1.0'
-        self.text_embedding_model = ErnieModel.from_pretrained(model_name)
-
-        # self.text_embedding_model = SentenceTransformer('{}/encoder/qrbert'.format(models_path),
+        # self.text_embedding_model = SentenceTransformer('{}/encoder'.format(models_path),
         #                                                 device=device)
+
+        self.text_embedding_model = SentenceTransformer('{}/sentence-transformersbert'.format(models_path))
 
         if docs_file is None:
             if os.path.exists('{}/vectors.pkl'.format(self.index_path)):
@@ -80,12 +77,12 @@ class NewsRetriever:
         self.sparse_index = SparseRetrieverFast(path=self.index_path)
         self.sparse_index.index_documents(all_snippets)
 
-        logging.info('Building dense index...')
-
-        self.dense_index = DenseRetriever(model=self.text_embedding_model,
-                                          batch_size=self.encoder_batch_size)
-        self.dense_index.create_index_from_documents(all_snippets)
-        self.dense_index.save_index(vectors_path='{}/vectors.pkl'.format(self.index_path))
+        # logging.info('Building dense index...')
+        #
+        # self.dense_index = DenseRetriever(model=self.text_embedding_model,
+        #                                   batch_size=self.encoder_batch_size)
+        # self.dense_index.create_index_from_documents(all_snippets)
+        # self.dense_index.save_index(vectors_path='{}/vectors.pkl'.format(self.index_path))
 
         logging.info('Done')
 
@@ -116,14 +113,14 @@ class NewsRetriever:
         sparse_results = self.sparse_index.search([query], topk=limit)[0]
         sparse_results = [r[0] for r in sparse_results]
 
-        logging.info('Running dense retriever for: {}'.format(query))
-
-        dense_results = self.dense_index.search([query], limit=limit)[0]
-        dense_results = [r[0] for r in dense_results]
-
+        # logging.info('Running dense retriever for: {}'.format(query))
+        #
+        # dense_results = self.dense_index.search([query], limit=limit)[0]
+        # dense_results = [r[0] for r in dense_results]
+        dense_results = []
+        # results = list(set(sparse_results + dense_results))
         results = list(set(sparse_results + dense_results))
 
-       
         search_results = []
         if len(results) > 0:
             for i in range(len(results)):
@@ -165,8 +162,7 @@ class NewsRetriever:
         search_results = search_results[:limit]
         paragraphs = paragraphs[:limit]
         logging.info('done searching')
-        return search_results,paragraphs
-
+        return search_results, paragraphs
 
 
 if __name__ == "__main__":
@@ -197,29 +193,30 @@ if __name__ == "__main__":
                         help='evidence num')
     args = parser.parse_args()
 
-    f_r_c = open("data/en/gossipcop_claims.txt","r", encoding="utf-8")
-    f_r_e = open("data/en/gossipcop_evidences.txt", "w", encoding="utf-8")
-    f_r_e_c = open("data/en/gossipcop_evidences_claims.txt", "w", encoding="utf-8")
+    f_r_c = open("data/liar/liar_claims.txt", "r", encoding="utf-8")
+    f_r_e = open("data/liar/liar_evidences.txt", "w", encoding="utf-8")
+    f_r_e_c = open("data/liar/liar_evidences_claims.txt", "w", encoding="utf-8")
 
     q = NewsRetriever(docs_file=args.index,
-             index_path=args.index_path,
-             models_path=args.models_path,
-             encoder_batch_size=args.encoder_batch_size,
-             nli_batch_size=args.nli_batch_size)
+                      index_path=args.index_path,
+                      models_path=args.models_path,
+                      encoder_batch_size=args.encoder_batch_size,
+                      nli_batch_size=args.nli_batch_size)
 
     for line in f_r_c:
         c = line.rstrip("\n")
         new_c = c
         evidence = ""
         for i in range(args.retrieval_step):
-            e,ps = q.search(new_c,args.limit)
+            e, ps = q.search(new_c, args.limit)
             if len(e) >= 1:
                 for i in e:
                     evidence += i["evidence"]
                 break
             else:
                 evidence = ps[0]['snippet']
+                # evidence = ""
             new_c += evidence
-        f_r_e_c.write(c +"\t" +evidence + "\n")
+        f_r_e_c.write(c + "\t" + evidence + "\n")
         f_r_e.write(evidence + "\n")
     f_r_e.close()
