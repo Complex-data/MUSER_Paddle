@@ -2,7 +2,7 @@
 In this repository, we utilize <a href="https://github.com/PaddlePaddle/Paddle">paddel paddle</a> to implement the MUSER.
 
 ## How to set up
-* Python3.7 
+* Python3.9 
 * Install all packages in requirement.txt.
 ```shell script
 pip3 install -r requirements.txt
@@ -11,13 +11,12 @@ pip3 install -r requirements.txt
 ## Prepare wiki corpus
 1) Download the <a href="https://dumps.wikimedia.org/enwiki/latest/">English Wikipedia </a> or <a href="https://dumps.wikimedia.org/zhwiki/latest/">Chinese Wikipedia</a>.
 2) Extract the Wikipedia through <a href="https://github.com/attardi/wikiextractor">wikiextractor</a>.
-3) Import Wiki into <a href="https://github.com/elastic/elasticsearch">ElasticSearch</a> to get a text database.
-4) Query in ES to generate the corresponding corpus, then process the corpus to get a jsonl file with documents as elements.
+3) Use faiss to index doc and search evidence for the claims, stentence-transformer base model can be found <a href="https://huggingface.co/sentence-transformers">here </a>.
 
    
 ## Index a list of documents:
 ```
-python multi_step_retriever_paddle.py --index example_docs.jsonl
+python multi_step_retriever_paddle.py --index wiki.jsonl
 ```
 
 
@@ -33,7 +32,11 @@ The model weights have been converted to paddlepaddle format, you can directly
 
  - <a href="https://drive.google.com/drive/folders/1_JGLjGuVh2ZJhtrmn1yIMtqaJOzka6i1?usp=sharing">NLI model</a>
 
+If you want to train the nli model, run the command below:
 
+```shell script
+python train.py --bert_type bert-large
+```
 
 ## Main experiment setup parameters
 
