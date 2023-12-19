@@ -77,12 +77,12 @@ class NewsRetriever:
         self.sparse_index = SparseRetrieverFast(path=self.index_path)
         self.sparse_index.index_documents(all_snippets)
 
-        # logging.info('Building dense index...')
-        #
-        # self.dense_index = DenseRetriever(model=self.text_embedding_model,
-        #                                   batch_size=self.encoder_batch_size)
-        # self.dense_index.create_index_from_documents(all_snippets)
-        # self.dense_index.save_index(vectors_path='{}/vectors.pkl'.format(self.index_path))
+        logging.info('Building dense index...')
+        
+        self.dense_index = DenseRetriever(model=self.text_embedding_model,
+                                          batch_size=self.encoder_batch_size)
+        self.dense_index.create_index_from_documents(all_snippets)
+        self.dense_index.save_index(vectors_path='{}/vectors.pkl'.format(self.index_path))
 
         logging.info('Done')
 
@@ -113,12 +113,12 @@ class NewsRetriever:
         sparse_results = self.sparse_index.search([query], topk=limit)[0]
         sparse_results = [r[0] for r in sparse_results]
 
-        # logging.info('Running dense retriever for: {}'.format(query))
-        #
-        # dense_results = self.dense_index.search([query], limit=limit)[0]
-        # dense_results = [r[0] for r in dense_results]
+        logging.info('Running dense retriever for: {}'.format(query))
+        # 
+        dense_results = self.dense_index.search([query], limit=limit)[0]
+        dense_results = [r[0] for r in dense_results]
         dense_results = []
-        # results = list(set(sparse_results + dense_results))
+        results = list(set(sparse_results + dense_results))
         results = list(set(sparse_results + dense_results))
 
         search_results = []
