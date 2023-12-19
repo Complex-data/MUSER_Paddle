@@ -8,7 +8,6 @@ import pickle
 import re
 import numpy
 import nltk
-# import torch
 import paddle
 from scipy import spatial
 from sentence_transformers import SentenceTransformer
