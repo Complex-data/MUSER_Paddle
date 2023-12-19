@@ -55,4 +55,3 @@ python train.py --bert_type bert-large
 | Maximum_epochs |10 |10 |10 |
 | Vocabulary_size | 30522|30522 | 21128 |
 | Learning_rate | 1e-5| 1e-5| 1e-5|
-````
