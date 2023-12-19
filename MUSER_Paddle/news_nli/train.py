@@ -16,6 +16,8 @@ from utils.nli_data_reader import NLIDataReader
 from utils.logging_handler import LoggingHandler
 from bert_nli import BertNLIModel
 from test_trained_model import evaluate
+import paddle.fluid as fluid
+
 
 
 def get_scheduler(optimizer, scheduler: str, warmup_steps: int, t_total: int):
@@ -45,7 +47,8 @@ def train(model, optimizer, scheduler, train_data, dev_data, batch_size, fp16, c
 
     for pointer in tqdm(range(0, len(train_data), batch_size),desc='training'):
         model.train() # model was in eval mode in evaluate(); re-activate the train mode
-        optimizer.clear_grad() # clear gradients first
+        # optimizer.clear_grad() # clear gradients first
+        optimizer.clear_gradients()
         paddle.fluid.dygraph.release_memory() # releases all unoccupied cached memory 
 
         step_cnt += 1
@@ -138,21 +141,25 @@ if __name__ == '__main__':
     print('=====Arguments=====')
 
     label_num = 2
-    platform = "gossipcop"
+    # platform = "gossipcop"
     # platform = "politifact"
     # platform = "weibo"
+    platform = "liar"
     
-    model_save_path = 'output/nli_model/'+platform
+    model_save_path = 'output/nli_model/'+platform + '_example'
 
     print('model save path', model_save_path)
 
     #### Just some code to print debug information to stdout
-    logger = Logger("training.log", level=Logger.INFO)
+    logging.basicConfig(format='%(asctime)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    level=logging.INFO,
+                    handlers=[LoggingHandler()])
     #### /print debug information to stdout
 
     # Read the dataset
-    nli_reader = NLIDataReader('datasets/AllNLI/'+platform)
-    all_data = nli_reader.get_news_examples(platform + '_train.jsonl') #,max_examples=5000)
+    nli_reader = NLIDataReader('datasets/'+platform)
+    all_data = nli_reader.get_news_examples(platform + '_train.jsonl', max_examples=5000)
 
     random.shuffle(all_data)
     train_num = int(len(all_data)*0.9)
@@ -166,8 +173,19 @@ if __name__ == '__main__':
     warmup_steps = int(total_steps*warmup_percent)
 
     model = BertNLIModel(gpu=gpu,batch_size=batch_size,bert_type=bert_type,model_path=trained_model, reinit_num=reinit_layers, freeze_layers=freeze_layers) 
-    optimizer = fluid.optimizer.Adam(learning_rate=2e-5, epsilon=1e-6, parameter_list=model.parameters(), grad_clip=fluid.clip.GradientClipByGlobalNorm(max_grad_norm))
-    scheduler = fluid.dygraph.learning_rate_scheduler.get_scheduler(scheduler_setting, warmup_steps=warmup_steps, total_steps=total_steps)
+    # optimizer = fluid.optimizer.Adam(learning_rate=2e-5, epsilon=1e-6, parameter_list=model.parameters(), grad_clip=fluid.clip.GradientClipByGlobalNorm(max_grad_norm))
+    optimizer = paddle.optimizer.Adam(learning_rate=2e-5, epsilon=1e-6, parameters=model.parameters(), grad_clip=paddle.nn.ClipGradByGlobalNorm(max_grad_norm))
+
+    # scheduler = fluid.dygraph.learning_rate_scheduler.get_scheduler(scheduler_setting, warmup_steps=warmup_steps, total_steps=total_steps)
+    # scheduler = paddle.optimizer.lr.LinearDecay(learning_rate=0.5, total_steps=total_steps)
+    learning_rate = 0.1
+    warmup_steps = 50
+    start_lr = 0
+    end_lr = 0.1
+
+    scheduler = fluid.dygraph.LinearLrWarmup( learning_rate, warmup_steps, start_lr, end_lr)
+
+
     if fp16:
         model, optimizer = amp.decorate_model(model, optimizer, opt_level='O1')
 
