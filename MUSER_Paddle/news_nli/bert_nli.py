@@ -6,6 +6,7 @@ import os
 import numpy as np 
 from tqdm import tqdm
 
+
 from paddlenlp.transformers import * 
 from utils.utils_paddle import build_batch
 
@@ -15,13 +16,13 @@ class BertNLIModel(nn.Layer):
         super(BertNLIModel, self).__init__() 
         self.bert_type = bert_type
         if 'bert-base' in bert_type:
-            self.bert = BertModel.from_pretrained('bert-base-uncased')
+            self.bert, self.bert_config = BertModel.from_pretrained('bert-base-uncased')
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         elif 'bert-large' in bert_type:
-            self.bert = BertModel.from_pretrained('bert-large-uncased')
+            self.bert, self.bert_config = BertModel.from_pretrained('bert-large-uncased')
             self.tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
         elif 'albert' in bert_type:
-            self.bert = AlbertModel.from_pretrained(bert_type)
+            self.bert, self.bert_config = AlbertModel.from_pretrained(bert_type)
             self.tokenizer = AlbertTokenizer.from_pretrained(bert_type)
         else:
             print('illegal bert type {}!'.format(bert_type))
@@ -37,12 +38,14 @@ class BertNLIModel(nn.Layer):
             if gpu:
                 sdict = paddle.load(model_path)
                 self.set_state_dict(sdict)
-                self.to('gpu')
+                paddle.device.set_device('gpu:0')
             else:
                 sdict = paddle.load(model_path)
                 self.set_state_dict(sdict)
         else:
-            if self.gpu: self.to('gpu')
+            if self.gpu: 
+                
+                paddle.device.set_device('gpu:0')
     def reinit(self, layer_num, freeze):
         """Reinitialise parameters of last N layers and freeze all others"""
         if freeze:
@@ -53,7 +56,9 @@ class BertNLIModel(nn.Layer):
             layer_names = ['encoder.layer.{}'.format(j) for j in layer_idx]
             for pn, pp in self.bert.named_parameters():
                 if any([ln in pn for ln in layer_names]) or 'pooler.' in pn:
-                    pp.set_value(paddle.randn(pp.shape)*0.02)
+                    # pp.set_value(paddle.randn(pp.shape)*0.02)
+                    paddle.disable_static()
+                    pp.set_value((paddle.randn(pp.shape)*0.02).numpy())
                     pp.stop_gradient = False
     def load_model(self, sdict):
         if self.gpu:
@@ -103,9 +108,9 @@ class BertNLIModel(nn.Layer):
         modules = [module for k, module in self.bert._modules.items()]
 
         if attention_mask is None:
-            attention_mask = paddle.ones_like(input_ids)
+            attention_mask = torch.ones_like(input_ids)
         if token_type_ids is None:
-            token_type_ids = paddle.zeros_like(input_ids)
+            token_type_ids = torch.zeros_like(input_ids)
 
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
         extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype) # fp16 compatibility
