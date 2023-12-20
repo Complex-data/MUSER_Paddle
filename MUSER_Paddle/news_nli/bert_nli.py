@@ -108,9 +108,9 @@ class BertNLIModel(nn.Layer):
         modules = [module for k, module in self.bert._modules.items()]
 
         if attention_mask is None:
-            attention_mask = torch.ones_like(input_ids)
+            attention_mask = paddle.ones_like(input_ids)
         if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
+            token_type_ids = paddle.zeros_like(input_ids)
 
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
         extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype) # fp16 compatibility
