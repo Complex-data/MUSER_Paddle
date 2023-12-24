@@ -74,7 +74,6 @@ termcolor==1.1.0
 tf-slim==1.1.0
 thinc==7.4.1
 tokenizers==0.8.1rc1
-# torch==1.8.0
 tqdm==4.46.0
 transformers==3.0.2
 typing-extensions==3.7.4.3
