@@ -10,7 +10,7 @@ from tqdm import tqdm
 import argparse
 
 from bert_nli import BertNLIModel
-from utils_paddle.nli_data_reader import NLIDataReader
+from utils.nli_data_reader import NLIDataReader
 
 
 def evaluate(model, test_data, checkpoint, mute=False, test_bs=10):
