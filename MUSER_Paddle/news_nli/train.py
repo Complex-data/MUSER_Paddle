@@ -13,8 +13,8 @@ import os
 from nltk.tokenize import word_tokenize
 from paddle import fluid
 
-from utils.nli_data_reader import NLIDataReader
-from utils.logging_handler import LoggingHandler
+from utils_paddle.nli_data_reader import NLIDataReader
+from utils_paddle.logging_handler import LoggingHandler
 from bert_nli import BertNLIModel
 from test_trained_model import evaluate
 
