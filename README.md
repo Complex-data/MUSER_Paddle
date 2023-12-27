@@ -38,20 +38,4 @@ If you want to train the nli model, run the command below:
 python train.py --bert_type bert-large
 ```
 
-## Main experiment setup parameters
-
-| |PolitiFact| Gossipcop| Weibo|
-|-|-|-|-|
-| Sequence_length | 512|512 |512 |
-| Max_encoder_length | 512|512 |512 |
-| Min_decoder_length | 64|64 |64 |
-| Max_decoder_length | 128|128 |128 |
-| Embedding_dimension | 200| 200| 200|
-| k(number of paragraphs retrieved) |30 |30 |30 |
-| MSR| 0.3| 0.3| 0.3|
-|$lambda$ |0.9 |0.9 |0.9 |
-| Retrieve_steps | 2| 3| 3|
-| Batch_size |64 |64 |32 |
-| Maximum_epochs |10 |10 |10 |
-| Vocabulary_size | 30522|30522 | 21128 |
-| Learning_rate | 1e-5| 1e-5| 1e-5|
+For Liar dataset, we provide files that contain evidence retrieved from corpus for training and testing purposes.
